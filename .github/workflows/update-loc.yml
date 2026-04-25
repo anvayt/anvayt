@@ -1,0 +1,41 @@
+name: Update lines changed stats
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 0"
+
+permissions:
+  contents: write
+
+jobs:
+  update-loc:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out profile README repo
+        uses: actions/checkout@v4
+
+      - name: Confirm GitHub CLI is available
+        run: gh --version
+
+      - name: Update LOC stats
+        env:
+          GH_TOKEN: ${{ secrets.GH_PRIVATE_REPO_TOKEN }}
+          GITHUB_USER: anvayt
+          AUTHOR_REGEX: "anvayt"
+        run: python scripts/update_loc_stats.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet README.md; then
+            echo "No README changes."
+            exit 0
+          fi
+
+          git add README.md
+          git commit -m "Update lines changed stats"
+          git push
